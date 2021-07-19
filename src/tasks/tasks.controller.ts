@@ -7,7 +7,7 @@ import {
   Delete,
   Patch,
   Query,
-  UseGuards,
+  UseGuards, Req,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -15,14 +15,18 @@ import { GetTaskFilterDto } from './dto/get-task-filter.dto';
 import { UpdateStatus } from './dto/update-status.dto';
 import { Task } from './task.entity';
 import { AuthGuard } from '@nestjs/passport';
+import { Logger } from '@nestjs/common';
 
 @Controller('tasks')
 @UseGuards(AuthGuard())
 export class TasksController {
+  private logger = new Logger('TasksController');
+
   constructor(private taskService: TasksService) {}
 
   @Get()
-  getAllTasks(@Query() filterTaskDto: GetTaskFilterDto): Promise<Task[]> {
+  getTasks(@Query() filterTaskDto: GetTaskFilterDto, @Req() req): Promise<Task[]> {
+    this.logger.verbose(`User ${req.user.username} retrieving all tasks`)
     return this.taskService.getTasks(filterTaskDto);
   }
 

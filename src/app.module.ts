@@ -9,21 +9,29 @@ import { configValidationSchema } from './config.schema';
   imports: [
     ConfigModule.forRoot({
       envFilePath: [`.env.stage.${process.env.STAGE}`],
-      validationSchema: configValidationSchema
+      validationSchema: configValidationSchema,
     }),
     TasksModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule], // Depends on ConfigModule
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
-        type: 'postgres',
-        autoLoadEntities: true,
-        synchronize: true,
-        host: configService.get('DB_HOST'),
-        username: configService.get('DB_USERNAME'),
-        password: configService.get('DB_PASSWORD'),
-        database: configService.get('DB_DATABASE'),
-      }),
+      useFactory: async (configService: ConfigService) => {
+        const isProduction = configService.get('STAGE') === 'prod';
+
+        return {
+          ssl: isProduction,
+          extra: {
+            ssl: isProduction ? { rejectUnauthorized: false } : null,
+          },
+          type: 'postgres',
+          autoLoadEntities: true,
+          synchronize: true,
+          host: configService.get('DB_HOST'),
+          username: configService.get('DB_USERNAME'),
+          password: configService.get('DB_PASSWORD'),
+          database: configService.get('DB_DATABASE'),
+        };
+      },
     }),
     AuthModule,
   ], // List of modules required by this module. Any exported provider by these modules will be available in this module via DI.
